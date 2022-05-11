@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Getting list of kernels, listing them and allowing the
+# user to select from a list rather than typing the file name.
+KERNELLIST=$(ls /boot | grep vmlinuz)
+KERNELARRAY=[]
+for str in ${KERNELLIST[@]}; do
+   num=$((num+1))
+   echo [$num] $str
+   KERNELARRAY+=( "$str" )
+done
+echo "Please enter the number of the kernel you would like to boot:"
+read -r KERNELSELECT
+echo ""
+echo "Kernel Selected: ["${KERNELARRAY[$KERNELSELECT]}"]"
+
+# Getting list of initramfs, listing them and allowing the
+# user to select from a list rather than typing the file name.
+INITRAMFSLIST=$(ls /boot | grep initramfs)
+INITRAMFSARRAY=[]
+for initstr in ${INITRAMFSLIST[@]}; do
+   initnum=$((initnum+1))
+   echo [$initnum] $initstr
+   INITRAMFSARRAY+=( "$initstr" )
+done
+echo "Please enter the number of the initramfs you would like to boot:"
+read -r INITRAMFSSELECT
+echo ""
+echo "Initramfs Selected: ["${INITRAMFSARRAY[$INITRAMFSSELECT]}"]"
+
+DEVICELIST=$(sudo blkid | grep /dev/ | awk '{print $1 $2}')
+echo ""
+echo $DEVICELIST
+DEVICELISTARRAY=[]
+for devstr in ${DEVICELIST[@]}; do
+   devnum=$((devnum+1))
+   echo [$devnum] $devstr
+   DEVICELISTARRAY+=( "$devstr" )
+done
+echo "Please enter the number of the root device you would like to boot:"
+read -r DEVICESELECT
+echo ""
+echo "Device Selected: ["${DEVICELISTARRAY[$DEVICESELECT]}"]"
