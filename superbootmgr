@@ -28,6 +28,8 @@ read -r INITRAMFSSELECT
 echo ""
 echo "Initramfs Selected: ["${INITRAMFSARRAY[$INITRAMFSSELECT]}"]"
 
+# Getting list of partitions, listing them and allowing the
+# user to select from a list rather than manually entering the UUID name.
 DEVICELIST=$(sudo blkid | grep /dev/ | awk '{print $1 $2}')
 echo ""
 echo $DEVICELIST
