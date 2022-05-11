@@ -41,4 +41,3 @@ echo "Please enter the number of the root device you would like to boot:"
 read -r DEVICESELECT
 echo ""
 echo "Device Selected: ["${DEVICELISTARRAY[$DEVICESELECT]}"]"
-p
