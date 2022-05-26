@@ -9,10 +9,18 @@ for str in ${KERNELLIST[@]}; do
    echo [$num] $str
    KERNELARRAY+=( "$str" )
 done
-echo "Please enter the number of the kernel you would like to boot:"
+echo "Please enter the number [1-"$num"] of the kernel you would like to boot:"
 read -r KERNELSELECT
+# Make sure selection is valid
+valid='^[1-'$num']+$'
+while ! [[ $KERNELSELECT =~ $valid ]] ; do
+   echo "Invalid selection. Please enter the number [1-"$num"] of the kernel you would like to boot:"
+   read -r KERNELSELECT
+done
 echo ""
 echo "Kernel Selected: ["${KERNELARRAY[$KERNELSELECT]}"]"
+echo ""
+echo ""
 
 # Getting list of initramfs, listing them and allowing the
 # user to select from a list rather than typing the file name.
@@ -23,13 +31,39 @@ for initstr in ${INITRAMFSLIST[@]}; do
    echo [$initnum] $initstr
    INITRAMFSARRAY+=( "$initstr" )
 done
-echo "Please enter the number of the initramfs you would like to boot:"
+echo "Please enter the number [1-"$initnum"] of the initramfs you would like to boot:"
 read -r INITRAMFSSELECT
+# Make sure selection is valid
+valid2='^[1-'$initnum']+$'
+while ! [[ $INITRAMFSSELECT =~ $valid ]] ; do
+   echo "Invalid selection. Please enter the number [1-"$num"] of the initramfs you would like to boot:"
+   read -r INITRAMFSSELECT
+done
 echo ""
 echo "Initramfs Selected: ["${INITRAMFSARRAY[$INITRAMFSSELECT]}"]"
+echo ""
+echo ""
+
+# Encryption?
+echo "Are you using an encrypted root? (y/n)"
+read -r ENCRYPT
+while [[ $ENCRYPT != @(yes|no|y|n|Y|N|Yes|No|YES|NO|YEs|yES|yeS|nO|YeS|yEs) ]]
+do
+   echo $ENCRYPT
+   echo "Please enter yes or no (y/n)"
+   read -r ENCRYPT
+done
+if [[ $ENCRYPT == @(yes|y|Y|Yes|YES|YEs|yES|yeS|YeS|yEs) ]]
+then
+   ENCUUID=$(sudo blkid | grep UUID | grep LUKS | awk '{print $2}')
+   ENCUUID=${ENCUUID:6:-1}
+   echo $ENCUUID
+
+fi
 
 # Getting list of partitions, listing them and allowing the
 # user to select from a list rather than manually entering the UUID name.
+
 DEVICELIST=$(sudo blkid | grep /dev/ | awk '{print $1 $2}')
 echo ""
 echo $DEVICELIST
@@ -39,7 +73,43 @@ for devstr in ${DEVICELIST[@]}; do
    echo [$devnum] $devstr
    DEVICELISTARRAY+=( "$devstr" )
 done
+echo "If you haven't already, make sure to open any encrypted partitions prior to running this step."
 echo "Please enter the number of the root device you would like to boot:"
 read -r DEVICESELECT
 echo ""
 echo "Device Selected: ["${DEVICELISTARRAY[$DEVICESELECT]}"]"
+
+echo "Are you using btrfs? (y/n)"
+read -r ASKBTRFS
+while [[ $ASKBTRFS != @(yes|no|y|n|Y|N|Yes|No|YES|NO|YEs|yES|yeS|nO|YeS|yEs) ]]
+do
+   echo $ASKBTRFS
+   echo "Please enter yes or no (y/n)"
+   read -r ASKBTRFS
+done
+if [[ $ASKBTRFS == @(yes|y|Y|Yes|YES|YEs|yES|yeS|YeS|yEs) ]]
+then
+   echo "Please enter the name of your root subvolume."
+   read -r SUBVOL
+   echo "You have entered "$SUBVOL" as your root btrfs subvolume."
+   echo "Is this correct? (y/n)"
+   read -r SUBVOLCHECK
+   while [[ $SUBVOLCHECK != @(yes|no|y|n|Y|N|Yes|No|YES|NO|YEs|yES|yeS|nO|YeS|yEs) ]]
+   do
+      echo $SUBVOLCHECK
+      echo "Please enter yes or no (y/n)"
+      read -r SUBVOLCHECK
+   done
+   while [[ $SUBVOLCHECK == @(no|n|N|No|NO|nO) ]]
+   do
+      echo "Please enter the name of your root subvolume."
+      read -r SUBVOL
+      echo "You have entered "$SUBVOL" as your root btrfs subvolume."
+      echo "Is this correct? (y/n)"
+      read -r SUBVOLCHECK
+   done
+   echo "Root subvolume name: " $SUBVOL
+fi
+
+# Actual command efibootmgr gets called with all variables defined
+#sudo efibootmgr --disk /dev/nvme0n1 --part 1 --create --label "GenFalcon" --loader /vmlinuz-5.17.6-gentoo-x86_64 --unicode 'crypt_root=UUID=603cd749-9b94-499d-945f-81fdb4a6f3bf root=UUID=efc9a18d-d68b-4a28-bbf5-c9a4854ed082 rootflags=subvol=@ rw initrd=\initramfs-5.17.6-gentoo-x86_64.img i915.i915_enable_rc6=1 i915.i915_enable_fbc=1 acpi_backlight=video quiet loglevel=3'
